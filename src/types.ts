@@ -2,6 +2,7 @@ export interface Member {
   id: string;
   name: string;
   color: string;
+  isMercenary?: boolean;
 }
 
 export interface UnavailableSlot {
@@ -58,6 +59,7 @@ export interface TimeSlotScore {
   endTime: string;
   availableMembers: Member[];
   unavailableMembers: Member[];
+  notSubmittedMembers: Member[];
   score: number;
   dayOfWeek: number;
 }

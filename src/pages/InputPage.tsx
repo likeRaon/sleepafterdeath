@@ -140,39 +140,62 @@ export default function InputPage({ config, weekStart, onChangeWeek, memberSched
               <p className="text-slate-500 text-sm">관리자 탭에서 멤버를 추가해주세요.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              {config.members.map((member, idx) => {
-                const color = member.color || MEMBER_COLORS[idx % MEMBER_COLORS.length];
-                const submitted = memberSchedules[member.id] !== undefined;
-                const isSelected = selectedMember?.id === member.id;
-                return (
-                  <button
-                    key={member.id}
-                    onClick={() => handleSelectMember(member)}
-                    className={`relative flex flex-col items-center gap-2 px-3 py-4 rounded-xl border-2 transition-all duration-200 ${
-                      isSelected
-                        ? 'border-[#4f8ef7] bg-[#4f8ef7]/10 text-white shadow-lg shadow-[#4f8ef7]/10'
-                        : 'border-[#1e2d4a] bg-[#0c1121] text-slate-400 hover:border-[#253352] hover:bg-[#101626]'
-                    }`}
-                  >
-                    {submitted && (
-                      <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-white text-[11px] font-black shadow-sm">
-                        ✓
-                      </span>
-                    )}
-                    <span
-                      className="w-9 h-9 rounded-full flex items-center justify-center text-white font-black text-base shadow-md"
-                      style={{ backgroundColor: color }}
-                    >
-                      {member.name.charAt(0)}
-                    </span>
-                    <span className="text-sm font-semibold">{member.name}</span>
-                    <span className={`text-xs font-medium ${submitted ? 'text-green-500' : 'text-slate-600'}`}>
-                      {submitted ? '제출완료' : '미제출'}
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="space-y-4">
+              {[
+                { label: '정식 멤버', members: config.members.filter((m) => !m.isMercenary) },
+                { label: '용병', members: config.members.filter((m) => m.isMercenary) },
+              ]
+                .filter(({ members }) => members.length > 0)
+                .map(({ label, members }) => (
+                  <div key={label}>
+                    <p className="text-slate-500 text-xs font-semibold mb-2">{label}</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      {members.map((member) => {
+                        const idx = config.members.findIndex((m) => m.id === member.id);
+                        const color = member.color || MEMBER_COLORS[idx % MEMBER_COLORS.length];
+                        const submitted = memberSchedules[member.id] !== undefined;
+                        const isSelected = selectedMember?.id === member.id;
+                        return (
+                          <button
+                            key={member.id}
+                            onClick={() => handleSelectMember(member)}
+                            className={`relative flex flex-col items-center gap-2 px-3 py-4 rounded-xl border-2 transition-all duration-200 ${
+                              isSelected
+                                ? 'border-[#4f8ef7] bg-[#4f8ef7]/10 text-white shadow-lg shadow-[#4f8ef7]/10'
+                                : 'border-[#1e2d4a] bg-[#0c1121] text-slate-400 hover:border-[#253352] hover:bg-[#101626]'
+                            }`}
+                          >
+                            {submitted && (
+                              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-white text-[11px] font-black shadow-sm">
+                                ✓
+                              </span>
+                            )}
+                            {member.isMercenary && !submitted && (
+                              <span className="absolute top-1.5 right-1.5 text-[9px] font-bold text-[#c9a227] bg-[#c9a227]/10 border border-[#c9a227]/25 px-1 py-0.5 rounded leading-none">
+                                용병
+                              </span>
+                            )}
+                            {member.isMercenary && submitted && (
+                              <span className="absolute top-1.5 left-1.5 text-[9px] font-bold text-[#c9a227] bg-[#c9a227]/10 border border-[#c9a227]/25 px-1 py-0.5 rounded leading-none">
+                                용병
+                              </span>
+                            )}
+                            <span
+                              className="w-9 h-9 rounded-full flex items-center justify-center text-white font-black text-base shadow-md"
+                              style={{ backgroundColor: color }}
+                            >
+                              {member.name.charAt(0)}
+                            </span>
+                            <span className="text-sm font-semibold">{member.name}</span>
+                            <span className={`text-xs font-medium ${submitted ? 'text-green-500' : 'text-slate-600'}`}>
+                              {submitted ? '제출완료' : '미제출'}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
             </div>
           )}
         </div>

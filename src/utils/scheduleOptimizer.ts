@@ -9,13 +9,11 @@ function isTimeOverlapping(sStart: number, sEnd: number, uStart: number, uEnd: n
 }
 
 function isMemberAvailable(
-  schedule: MemberSchedule | undefined,
+  schedule: MemberSchedule,
   dateStr: string,
   slotStart: number,
   slotEnd: number,
 ): boolean {
-  if (!schedule) return true;
-
   for (const slot of schedule.unavailableSlots.filter((s) => s.date === dateStr)) {
     if (slot.allDay) return false;
     const uStart = timeToMinutes(slot.startTime);
@@ -54,9 +52,13 @@ export function findOptimalSlots(
       const end = start + duration;
       const availableMembers: Member[] = [];
       const unavailableMembers: Member[] = [];
+      const notSubmittedMembers: Member[] = [];
 
       for (const member of members) {
-        if (isMemberAvailable(memberSchedules[member.id], dateStr, start, end)) {
+        const schedule = memberSchedules[member.id];
+        if (!schedule) {
+          notSubmittedMembers.push(member);
+        } else if (isMemberAvailable(schedule, dateStr, start, end)) {
           availableMembers.push(member);
         } else {
           unavailableMembers.push(member);
@@ -69,6 +71,7 @@ export function findOptimalSlots(
         endTime: minutesToTime(end),
         availableMembers,
         unavailableMembers,
+        notSubmittedMembers,
         score: availableMembers.length,
         dayOfWeek: getDay(day),
       });

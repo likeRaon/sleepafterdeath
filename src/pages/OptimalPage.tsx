@@ -46,6 +46,9 @@ export default function OptimalPage({ config, weekStart, onChangeWeek, schedule,
   }, [optimalSlots]);
 
   const submittedCount = config.members.filter((m) => schedule?.memberSchedules?.[m.id] !== undefined).length;
+  const regularMembers = config.members.filter((m) => !m.isMercenary);
+  const mercenaryMembers = config.members.filter((m) => m.isMercenary);
+  const regularSubmittedCount = regularMembers.filter((m) => schedule?.memberSchedules?.[m.id] !== undefined).length;
 
   const getConfirmedIdx = (slot: TimeSlotScore) =>
     confirmedTimes.findIndex((ct) => ct.date === slot.date && ct.startTime === slot.startTime && ct.raidId === selectedRaid?.id);
@@ -156,9 +159,14 @@ export default function OptimalPage({ config, weekStart, onChangeWeek, schedule,
       <div className="card-inner mb-5 p-4">
         <div className="flex items-center justify-between mb-3">
           <span className="text-slate-400 text-sm font-semibold">일정 제출 현황</span>
-          <span className={`font-bold text-sm ${submittedCount === config.members.length ? 'text-green-400' : 'text-[#4f8ef7]'}`}>
-            {submittedCount} <span className="text-slate-600 font-normal">/ {config.members.length}명</span>
-          </span>
+          <div className="flex items-center gap-3 text-sm font-bold">
+            <span>
+              <span className={submittedCount === config.members.length ? 'text-green-400' : 'text-[#4f8ef7]'}>
+                {submittedCount}
+              </span>
+              <span className="text-slate-600 font-normal"> / {config.members.length}명</span>
+            </span>
+          </div>
         </div>
         <div className="w-full bg-[#1a2540] rounded-full h-1.5 mb-3 overflow-hidden">
           <div
@@ -171,23 +179,55 @@ export default function OptimalPage({ config, weekStart, onChangeWeek, schedule,
             }}
           />
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          {config.members.map((m, idx) => {
-            const color = m.color || MEMBER_COLORS[idx % MEMBER_COLORS.length];
-            const submitted = schedule?.memberSchedules?.[m.id] !== undefined;
-            return (
-              <span
-                key={m.id}
-                className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border ${
-                  submitted ? 'border-[#1e2d4a] bg-[#101626] text-slate-300' : 'border-dashed border-[#1e2d4a] text-slate-600'
-                }`}
-              >
-                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: submitted ? color : '#374151' }} />
-                {m.name}
-              </span>
-            );
-          })}
-        </div>
+        {regularMembers.length > 0 && (
+          <div className="mb-2">
+            <p className="text-slate-600 text-[11px] mb-1.5">
+              정식 멤버 <span className="text-slate-500 font-semibold">{regularSubmittedCount}/{regularMembers.length}</span>
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {regularMembers.map((m, idx) => {
+                const color = m.color || MEMBER_COLORS[idx % MEMBER_COLORS.length];
+                const submitted = schedule?.memberSchedules?.[m.id] !== undefined;
+                return (
+                  <span
+                    key={m.id}
+                    className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border ${
+                      submitted ? 'border-[#1e2d4a] bg-[#101626] text-slate-300' : 'border-dashed border-[#1e2d4a] text-slate-600'
+                    }`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: submitted ? color : '#374151' }} />
+                    {m.name}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        {mercenaryMembers.length > 0 && (
+          <div>
+            <p className="text-slate-600 text-[11px] mb-1.5">
+              용병 <span className="text-slate-500 font-semibold">{mercenaryMembers.filter((m) => schedule?.memberSchedules?.[m.id] !== undefined).length}/{mercenaryMembers.length}</span>
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {mercenaryMembers.map((m, idx) => {
+                const color = m.color || MEMBER_COLORS[idx % MEMBER_COLORS.length];
+                const submitted = schedule?.memberSchedules?.[m.id] !== undefined;
+                return (
+                  <span
+                    key={m.id}
+                    className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border ${
+                      submitted ? 'border-[#c9a227]/25 bg-[#c9a227]/5 text-slate-300' : 'border-dashed border-[#1e2d4a] text-slate-600'
+                    }`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: submitted ? color : '#374151' }} />
+                    {m.name}
+                    <span className="text-[9px] font-bold text-[#c9a227] opacity-70">용병</span>
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {submittedCount < config.members.length && (
           <p className="text-slate-600 text-xs mt-2.5">
             💡 <Link to="/" className="text-[#4f8ef7] hover:underline">일정 입력 탭</Link>에서 모든 멤버가 제출할수록 더 정확한 결과가 나옵니다.
@@ -284,8 +324,12 @@ export default function OptimalPage({ config, weekStart, onChangeWeek, schedule,
                               <div className="flex-1 bg-[#1a2540] rounded-full h-2 overflow-hidden">
                                 <div className="h-2 rounded-full transition-all duration-500" style={{ width: `${ratio * 100}%`, backgroundColor: barColor }} />
                               </div>
-                              <span className="text-xs font-bold flex-shrink-0 w-12 text-right" style={{ color: barColor }}>
-                                {slot.score}/{total}명
+                              <span className="text-xs font-bold flex-shrink-0 text-right" style={{ color: barColor }}>
+                                {slot.score}
+                                <span className="text-slate-600 font-normal">/{total}명</span>
+                                {slot.notSubmittedMembers.length > 0 && (
+                                  <span className="text-slate-600 font-normal"> (+{slot.notSubmittedMembers.length}미제출)</span>
+                                )}
                               </span>
                             </div>
 
@@ -294,9 +338,14 @@ export default function OptimalPage({ config, weekStart, onChangeWeek, schedule,
                                 const mi = config.members.findIndex((cm) => cm.id === m.id);
                                 const color = m.color || MEMBER_COLORS[mi % MEMBER_COLORS.length];
                                 return (
-                                  <span key={m.id} className="flex items-center gap-1 text-[11px] text-slate-300 bg-green-500/8 border border-green-500/15 px-2 py-0.5 rounded-full">
+                                  <span key={m.id} className={`flex items-center gap-1 text-[11px] text-slate-300 px-2 py-0.5 rounded-full border ${
+                                    m.isMercenary
+                                      ? 'bg-[#c9a227]/8 border-[#c9a227]/20'
+                                      : 'bg-green-500/8 border-green-500/15'
+                                  }`}>
                                     <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
                                     {m.name}
+                                    {m.isMercenary && <span className="text-[9px] text-[#c9a227] font-bold opacity-80">용병</span>}
                                   </span>
                                 );
                               })}
@@ -307,6 +356,19 @@ export default function OptimalPage({ config, weekStart, onChangeWeek, schedule,
                                   <span key={m.id} className="flex items-center gap-1 text-xs text-slate-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full line-through">
                                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
                                     {m.name}
+                                    {m.isMercenary && <span className="text-[9px] text-[#c9a227] font-bold opacity-70 no-underline" style={{ textDecoration: 'none' }}>용병</span>}
+                                  </span>
+                                );
+                              })}
+                              {slot.notSubmittedMembers.map((m) => {
+                                const mi = config.members.findIndex((cm) => cm.id === m.id);
+                                const color = m.color || MEMBER_COLORS[mi % MEMBER_COLORS.length];
+                                return (
+                                  <span key={m.id} className="flex items-center gap-1 text-[11px] text-slate-500 bg-slate-500/5 border border-dashed border-slate-600/40 px-2 py-0.5 rounded-full">
+                                    <span className="w-1.5 h-1.5 rounded-full opacity-40" style={{ backgroundColor: color }} />
+                                    {m.name}
+                                    <span className="text-[9px] text-slate-600">미제출</span>
+                                    {m.isMercenary && <span className="text-[9px] text-[#c9a227] font-bold opacity-50">용병</span>}
                                   </span>
                                 );
                               })}
@@ -358,10 +420,20 @@ export default function OptimalPage({ config, weekStart, onChangeWeek, schedule,
                     style={{ width: `${(confirmModal.score / config.members.length) * 100}%`, background: 'linear-gradient(90deg,#22c55e,#16a34a)' }}
                   />
                 </div>
-                <span className="text-green-400 text-xs font-bold">{confirmModal.score}/{config.members.length}명 참여</span>
+                <span className="text-green-400 text-xs font-bold">
+                  {confirmModal.score}
+                  <span className="text-slate-600 font-normal">/{config.members.length}명 확인</span>
+                </span>
               </div>
               {confirmModal.unavailableMembers.length > 0 && (
-                <p className="text-red-400 text-xs mt-1.5">불참: {confirmModal.unavailableMembers.map((m) => m.name).join(', ')}</p>
+                <p className="text-red-400 text-xs mt-1.5">
+                  불참: {confirmModal.unavailableMembers.map((m) => m.name + (m.isMercenary ? '(용병)' : '')).join(', ')}
+                </p>
+              )}
+              {confirmModal.notSubmittedMembers.length > 0 && (
+                <p className="text-slate-600 text-xs mt-1">
+                  미제출: {confirmModal.notSubmittedMembers.map((m) => m.name + (m.isMercenary ? '(용병)' : '')).join(', ')}
+                </p>
               )}
             </div>
 

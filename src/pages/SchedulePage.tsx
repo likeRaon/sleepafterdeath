@@ -15,10 +15,14 @@ const MEMBER_COLORS = [
 
 export default function SchedulePage({ config, weekStart, onChangeWeek, schedule }: SchedulePageProps) {
   const days = getWeekDays(weekStart);
+  const regularMembers = config.members.filter((m) => !m.isMercenary);
+  const mercenaryMembers = config.members.filter((m) => m.isMercenary);
   const total = config.members.length;
 
   const submittedMembers = config.members.filter((m) => schedule?.memberSchedules?.[m.id] !== undefined);
   const notSubmitted = config.members.filter((m) => schedule?.memberSchedules?.[m.id] === undefined);
+  const regularSubmitted = regularMembers.filter((m) => schedule?.memberSchedules?.[m.id] !== undefined);
+  const mercenarySubmitted = mercenaryMembers.filter((m) => schedule?.memberSchedules?.[m.id] !== undefined);
   const submitRatio = total > 0 ? (submittedMembers.length / total) * 100 : 0;
   const allSubmitted = submittedMembers.length === total && total > 0;
 
@@ -57,10 +61,12 @@ export default function SchedulePage({ config, weekStart, onChangeWeek, schedule
         <div className="px-5 py-4 border-b border-[#1e2d4a]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-white font-bold flex items-center gap-2">📊 일정 제출 현황</h2>
-            <span className="font-bold text-sm">
-              <span className={allSubmitted ? 'text-green-400' : 'text-[#4f8ef7]'}>{submittedMembers.length}</span>
-              <span className="text-slate-600"> / {total}명</span>
-            </span>
+            <div className="flex items-center gap-3 text-sm font-bold">
+              <span>
+                <span className={allSubmitted ? 'text-green-400' : 'text-[#4f8ef7]'}>{submittedMembers.length}</span>
+                <span className="text-slate-600"> / {total}명</span>
+              </span>
+            </div>
           </div>
           <div className="w-full bg-[#1a2540] rounded-full h-2 overflow-hidden">
             <div
@@ -81,34 +87,92 @@ export default function SchedulePage({ config, weekStart, onChangeWeek, schedule
           )}
         </div>
 
-        <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {config.members.map((member, idx) => {
-            const color = member.color || MEMBER_COLORS[idx % MEMBER_COLORS.length];
-            const submitted = schedule?.memberSchedules?.[member.id] !== undefined;
-            return (
-              <div
-                key={member.id}
-                className={`flex items-center gap-2.5 px-3 py-3 rounded-xl border transition-all ${
-                  submitted ? 'border-green-500/20 bg-green-500/8' : 'border-[#1e2d4a] bg-[#0c1121]'
-                }`}
-              >
-                <span
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black flex-shrink-0 shadow-sm"
-                  style={{ backgroundColor: submitted ? color : '#1e2d4a' }}
-                >
-                  {member.name.charAt(0)}
+        <div className="p-4 space-y-4">
+          {regularMembers.length > 0 && (
+            <div>
+              <p className="text-slate-500 text-xs font-semibold mb-2">
+                정식 멤버
+                <span className="ml-2 text-slate-600 font-normal">
+                  {regularSubmitted.length}/{regularMembers.length}명 제출
                 </span>
-                <div className="min-w-0">
-                  <p className={`text-sm font-semibold truncate ${submitted ? 'text-slate-200' : 'text-slate-600'}`}>
-                    {member.name}
-                  </p>
-                  <p className={`text-xs font-medium ${submitted ? 'text-green-500' : 'text-slate-600'}`}>
-                    {submitted ? '✓ 제출완료' : '미제출'}
-                  </p>
-                </div>
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {regularMembers.map((member) => {
+                  const idx = config.members.findIndex((m) => m.id === member.id);
+                  const color = member.color || MEMBER_COLORS[idx % MEMBER_COLORS.length];
+                  const submitted = schedule?.memberSchedules?.[member.id] !== undefined;
+                  return (
+                    <div
+                      key={member.id}
+                      className={`flex items-center gap-2.5 px-3 py-3 rounded-xl border transition-all ${
+                        submitted ? 'border-green-500/20 bg-green-500/8' : 'border-[#1e2d4a] bg-[#0c1121]'
+                      }`}
+                    >
+                      <span
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black flex-shrink-0 shadow-sm"
+                        style={{ backgroundColor: submitted ? color : '#1e2d4a' }}
+                      >
+                        {member.name.charAt(0)}
+                      </span>
+                      <div className="min-w-0">
+                        <p className={`text-sm font-semibold truncate ${submitted ? 'text-slate-200' : 'text-slate-600'}`}>
+                          {member.name}
+                        </p>
+                        <p className={`text-xs font-medium ${submitted ? 'text-green-500' : 'text-slate-600'}`}>
+                          {submitted ? '✓ 제출완료' : '미제출'}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          )}
+          {mercenaryMembers.length > 0 && (
+            <div>
+              <p className="text-slate-500 text-xs font-semibold mb-2">
+                용병
+                <span className="ml-2 text-slate-600 font-normal">
+                  {mercenarySubmitted.length}/{mercenaryMembers.length}명 제출
+                </span>
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {mercenaryMembers.map((member) => {
+                  const idx = config.members.findIndex((m) => m.id === member.id);
+                  const color = member.color || MEMBER_COLORS[idx % MEMBER_COLORS.length];
+                  const submitted = schedule?.memberSchedules?.[member.id] !== undefined;
+                  return (
+                    <div
+                      key={member.id}
+                      className={`flex items-center gap-2.5 px-3 py-3 rounded-xl border transition-all ${
+                        submitted ? 'border-[#c9a227]/30 bg-[#c9a227]/5' : 'border-[#1e2d4a] bg-[#0c1121]'
+                      }`}
+                    >
+                      <span
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black flex-shrink-0 shadow-sm"
+                        style={{ backgroundColor: submitted ? color : '#1e2d4a' }}
+                      >
+                        {member.name.charAt(0)}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <p className={`text-sm font-semibold truncate ${submitted ? 'text-slate-200' : 'text-slate-600'}`}>
+                            {member.name}
+                          </p>
+                          <span className="text-[9px] font-bold text-[#c9a227] bg-[#c9a227]/10 border border-[#c9a227]/25 px-1 py-0.5 rounded leading-none flex-shrink-0">
+                            용병
+                          </span>
+                        </div>
+                        <p className={`text-xs font-medium ${submitted ? 'text-[#c9a227]' : 'text-slate-600'}`}>
+                          {submitted ? '✓ 제출완료' : '미제출'}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -170,10 +234,17 @@ export default function SchedulePage({ config, weekStart, onChangeWeek, schedule
                       return (
                         <span
                           key={i}
-                          className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-[#101626] border border-[#1e2d4a] text-slate-400"
+                          className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-[#101626] border text-slate-400 ${
+                            member.isMercenary ? 'border-[#c9a227]/20' : 'border-[#1e2d4a]'
+                          }`}
                         >
                           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
                           <span className="text-slate-300">{member.name}</span>
+                          {member.isMercenary && (
+                            <span className="text-[9px] font-bold text-[#c9a227] bg-[#c9a227]/10 border border-[#c9a227]/25 px-1 py-0.5 rounded leading-none">
+                              용병
+                            </span>
+                          )}
                           <span className="text-red-400 text-xs">불참 {detail}</span>
                         </span>
                       );

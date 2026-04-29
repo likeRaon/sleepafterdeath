@@ -19,6 +19,7 @@ export default function AdminPage({ config, onUpdateConfig, confirmedTimes, onRe
   const [authed, setAuthed] = useState(false);
   const [authError, setAuthError] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberIsMercenary, setNewMemberIsMercenary] = useState(false);
   const [newRaidName, setNewRaidName] = useState('');
   const [newRaidMembers, setNewRaidMembers] = useState(8);
   const [newRaidDuration, setNewRaidDuration] = useState(120);
@@ -48,9 +49,11 @@ export default function AdminPage({ config, onUpdateConfig, confirmedTimes, onRe
       id: `member-${Date.now()}`,
       name,
       color: MEMBER_COLORS[config.members.length % MEMBER_COLORS.length],
+      isMercenary: newMemberIsMercenary,
     };
     await onUpdateConfig({ members: [...config.members, newMember] });
     setNewMemberName('');
+    setNewMemberIsMercenary(false);
   };
 
   const removeMember = async (id: string) => {
@@ -147,27 +150,62 @@ export default function AdminPage({ config, onUpdateConfig, confirmedTimes, onRe
       <div className="bg-[#1a1f35] rounded-xl border border-[#2a3050] overflow-hidden">
         <div className="p-5 border-b border-[#2a3050]">
           <h2 className="text-lg font-bold text-white">👥 멤버 관리</h2>
-          <p className="text-slate-500 text-sm mt-0.5">총 {config.members.length}명</p>
+          <p className="text-slate-500 text-sm mt-0.5">
+            정식 {config.members.filter((m) => !m.isMercenary).length}명
+            {config.members.some((m) => m.isMercenary) && (
+              <> · 용병 {config.members.filter((m) => m.isMercenary).length}명</>
+            )}
+          </p>
         </div>
         <div className="p-5">
-          <div className="flex flex-wrap gap-3 mb-5">
-            {config.members.map((m) => (
-              <div key={m.id} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#111827] border border-[#2a3050]">
-                <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: m.color }} />
-                <span className="text-slate-200 text-sm">{m.name}</span>
-                <button onClick={() => removeMember(m.id)} className="text-slate-600 hover:text-red-400 transition-colors ml-1">×</button>
+          {config.members.filter((m) => !m.isMercenary).length > 0 && (
+            <div className="mb-4">
+              <p className="text-slate-500 text-xs font-semibold mb-2">정식 멤버</p>
+              <div className="flex flex-wrap gap-3">
+                {config.members.filter((m) => !m.isMercenary).map((m) => (
+                  <div key={m.id} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#111827] border border-[#2a3050]">
+                    <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: m.color }} />
+                    <span className="text-slate-200 text-sm">{m.name}</span>
+                    <button onClick={() => removeMember(m.id)} className="text-slate-600 hover:text-red-400 transition-colors ml-1">×</button>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="flex gap-3">
+            </div>
+          )}
+          {config.members.filter((m) => m.isMercenary).length > 0 && (
+            <div className="mb-4">
+              <p className="text-slate-500 text-xs font-semibold mb-2">용병</p>
+              <div className="flex flex-wrap gap-3">
+                {config.members.filter((m) => m.isMercenary).map((m) => (
+                  <div key={m.id} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#111827] border border-[#c9a227]/30">
+                    <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: m.color }} />
+                    <span className="text-slate-200 text-sm">{m.name}</span>
+                    <span className="text-[10px] font-bold text-[#c9a227] bg-[#c9a227]/10 border border-[#c9a227]/25 px-1.5 py-0.5 rounded">용병</span>
+                    <button onClick={() => removeMember(m.id)} className="text-slate-600 hover:text-red-400 transition-colors ml-1">×</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="flex gap-3 flex-wrap items-center">
             <input
               type="text"
               value={newMemberName}
               onChange={(e) => setNewMemberName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addMember()}
               placeholder="새 멤버 이름"
-              className="flex-1 bg-[#111827] border border-[#2a3050] rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-[#4f6ef7] text-sm"
+              className="flex-1 min-w-40 bg-[#111827] border border-[#2a3050] rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-[#4f6ef7] text-sm"
             />
+            <button
+              onClick={() => setNewMemberIsMercenary((v) => !v)}
+              className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                newMemberIsMercenary
+                  ? 'bg-[#c9a227]/15 text-[#c9a227] border-[#c9a227]/40'
+                  : 'bg-[#111827] text-slate-500 border-[#2a3050] hover:border-[#c9a227]/30 hover:text-[#c9a227]'
+              }`}
+            >
+              ⚔️ {newMemberIsMercenary ? '용병' : '정식'}
+            </button>
             <button onClick={addMember} className="px-5 py-2.5 bg-[#4f6ef7] hover:bg-[#6080ff] text-white font-medium rounded-xl transition-all text-sm">
               추가
             </button>
